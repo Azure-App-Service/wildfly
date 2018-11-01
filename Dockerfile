@@ -12,6 +12,9 @@ ENV JBOSS_HOME /opt/jboss/wildfly
 
 ENV _JAVA_OPTIONS -Djava.net.preferIPv4Stack=true
 
+ENV JAVA_OPTS -Djboss.http.port=80 $JAVA_OPTS
+ENV JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles $JAVA_OPTS
+
 COPY init_container.sh /bin/init_container.sh
 COPY sshd_config /etc/ssh/
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
