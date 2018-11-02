@@ -16,8 +16,12 @@ ENV JAVA_OPTS -Djboss.http.port=80 $JAVA_OPTS
 ENV JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles $JAVA_OPTS
 
 COPY init_container.sh /bin/init_container.sh
+COPY standalone-full.xml /tmp/wildfly/standalone-full.xml
 COPY sshd_config /etc/ssh/
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
+
+COPY index.jsp /tmp/wildfly/webapps/ROOT.war/index.jsp
+COPY background.png /tmp/wildfly/webapps/ROOT.war/background.png
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \
@@ -25,7 +29,8 @@ RUN apk add --update openssh-server bash openrc \
         && tar xvzf /tmp/wildfly-$WILDFLY_VERSION.tar.gz -C /tmp \
         && chmod 755 /bin/init_container.sh \
         && mkdir -p `dirname $JBOSS_HOME` \
-        && mv /tmp/wildfly-$WILDFLY_VERSION $JBOSS_HOME
+        && mv /tmp/wildfly-$WILDFLY_VERSION $JBOSS_HOME \
+        && mv /tmp/wildfly/standalone-full.xml $JBOSS_HOME/standalone/configuration/standalone-full.xml
 
 # Ensure signals are forwarded to the JVM process correctly for graceful shutdown
 ENV LAUNCH_JBOSS_IN_BACKGROUND true

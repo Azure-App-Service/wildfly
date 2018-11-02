@@ -29,7 +29,7 @@ fi
 if [ ! -d /home/site/wwwroot/webapps ]
 then
     mkdir -p /home/site/wwwroot
-    cp -r /tmp/tomcat/webapps /home/site/wwwroot
+    cp -r /tmp/wildfly/webapps /home/site/wwwroot
 fi
 
 # WEBSITE_INSTANCE_ID will be defined uniquely for each worker instance while running in Azure.
@@ -38,6 +38,25 @@ if [ -z "$WEBSITE_INSTANCE_ID" ]
 then
     export WEBSITE_INSTANCE_ID=dev
 fi
+
+# For now keep it simple by copying everything
+cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
+
+# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
+if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
+then
+    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
+    then
+        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
+    fi
+fi
+
+# Create marker file
+for dir in $JBOSS_HOME/standalone/deployments/*.war
+do
+    echo Creating $dir.dodeploy
+    echo $dir > $dir.dodeploy
+done
 
 # After all env vars are defined, add the ones of interest to ~/.profile
 # Adding to ~/.profile makes the env vars available to new login sessions (ssh) of the same user.
