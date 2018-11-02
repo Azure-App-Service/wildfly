@@ -17,6 +17,10 @@ echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 echo Starting ssh service...
 rc-service sshd start
 
+# Change to the home directory (helps keep paths relative to /home in used provided startup script)
+cd /home
+echo pwd: `pwd`
+
 # If a custom initialization script is defined, run it and exit.
 if [ -n "$INIT_SCRIPT" ]
 then
@@ -49,6 +53,26 @@ then
     then
         mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
     fi
+fi
+
+# Get the startup file path
+if [ -n "$1" ]
+then
+    # Path defined in the portal will be available as an argument to this script
+    STARTUP_FILE=$1
+else
+    # Default startup file path
+    STARTUP_FILE=/home/startup.sh
+fi
+
+# Run the startup file, if it exists
+if [ -f $STARTUP_FILE ]
+then
+    echo Running startup file $STARTUP_FILE
+    source $STARTUP_FILE
+    echo Finished running startup file $STARTUP_FILE
+else
+    echo Looked for startup file $STARTUP_FILE, but did not find it, so skipping running it.
 fi
 
 # Create marker file
