@@ -116,4 +116,4 @@ done
 # Start Tomcat
 echo Starting Wildfly...
 
-$JBOSS_HOME/bin/standalone.sh -c standalone-full.xml
+$JBOSS_HOME/bin/standalone.sh -b 0.0.0.0 -c standalone-full.xml
