@@ -15,6 +15,8 @@ ENV _JAVA_OPTIONS -Djava.net.preferIPv4Stack=true
 ENV JAVA_OPTS -Djboss.http.port=80 $JAVA_OPTS
 ENV JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles $JAVA_OPTS
 
+ENV HOME /home
+
 COPY init_container.sh /bin/init_container.sh
 COPY standalone-full.xml /tmp/wildfly/standalone-full.xml
 COPY sshd_config /etc/ssh/
@@ -25,6 +27,8 @@ COPY background.png /tmp/wildfly/webapps/ROOT.war/background.png
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \
+        && mkdir /root/.postgresql \
+        && wget -O /root/.postgresql/root.crt https://www.digicert.com/CACerts/BaltimoreCyberTrustRoot.crt \
         && echo "root:Docker!" | chpasswd \
         && tar xvzf /tmp/wildfly-$WILDFLY_VERSION.tar.gz -C /tmp \
         && chmod 755 /bin/init_container.sh \
