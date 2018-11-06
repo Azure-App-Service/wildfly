@@ -116,18 +116,6 @@ echo ***Waiting for server
 wait_for_server
 echo ***Server is ready
 
-# For now keep it simple by copying everything
-cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
-
-# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
-if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
-then
-    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
-    then
-        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
-    fi
-fi
-
 # Get the startup file path
 if [ -n "$1" ]
 then
@@ -146,6 +134,18 @@ then
     echo ***Finished running startup file $STARTUP_FILE
 else
     echo ***Looked for startup file $STARTUP_FILE, but did not find it, so skipping running it.
+fi
+
+# For now keep it simple by copying everything
+cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
+
+# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
+if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
+then
+    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
+    then
+        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
+    fi
 fi
 
 # Create marker file
