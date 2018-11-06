@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -m # Enable job control
+
 cat >/etc/motd <<EOL
   _____                               
   /  _  \ __________ _________   ____  
@@ -12,21 +14,21 @@ Documentation: http://aka.ms/webapp-linux
 EOL
 cat /etc/motd
 
-echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
+echo "***Setup openrc ..." && openrc && touch /run/openrc/softlevel
 
-echo Starting ssh service...
+echo ***Starting ssh service...
 rc-service sshd start
 
 # Change to the home directory (helps keep paths relative to /home in used provided startup script)
 cd /home
-echo pwd: `pwd`
+echo ***pwd: `pwd`
 
 # If a custom initialization script is defined, run it and exit.
 if [ -n "$INIT_SCRIPT" ]
 then
-    echo Running custom initialization script
+    echo ***Running custom initialization script
     source $INIT_SCRIPT
-    echo Finished running custom initialization script. Exiting.
+    echo ***Finished running custom initialization script. Exiting.
     exit
 fi
 
@@ -42,45 +44,6 @@ if [ -z "$WEBSITE_INSTANCE_ID" ]
 then
     export WEBSITE_INSTANCE_ID=dev
 fi
-
-# For now keep it simple by copying everything
-cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
-
-# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
-if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
-then
-    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
-    then
-        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
-    fi
-fi
-
-# Get the startup file path
-if [ -n "$1" ]
-then
-    # Path defined in the portal will be available as an argument to this script
-    STARTUP_FILE=$1
-else
-    # Default startup file path
-    STARTUP_FILE=/home/startup.sh
-fi
-
-# Run the startup file, if it exists
-if [ -f $STARTUP_FILE ]
-then
-    echo Running startup file $STARTUP_FILE
-    source $STARTUP_FILE
-    echo Finished running startup file $STARTUP_FILE
-else
-    echo Looked for startup file $STARTUP_FILE, but did not find it, so skipping running it.
-fi
-
-# Create marker file
-for dir in $JBOSS_HOME/standalone/deployments/*.war
-do
-    echo Creating $dir.dodeploy
-    echo $dir > $dir.dodeploy
-done
 
 # After all env vars are defined, add the ones of interest to ~/.profile
 # Adding to ~/.profile makes the env vars available to new login sessions (ssh) of the same user.
@@ -101,6 +64,7 @@ done <<< `printenv | cut -d "=" -f 1 | grep -v ^APPSETTING_`
 # Step 2. Add well known environment variables to ~/.profile
 well_known_env_vars=( 
     JBOSS_HOME
+    JBOSS_CLI
     WILDFLY_VERSION
     HTTP_LOGGING_ENABLED
     WEBSITE_SITE_NAME
@@ -132,12 +96,67 @@ done <<< `printenv | cut -d "=" -f 1 | grep -E "^(WEBSITE|APPSETTING|SQLCONNSTR|
 # Write the variables to be exported to ~/.profile
 for export_var in "${export_vars[@]}"
 do
-    echo Exporting env var $export_var
+    echo ***Exporting env var $export_var
     # We use single quotes to preserve escape characters
 	echo export $export_var=\'`printenv $export_var`\' >> ~/.profile
 done
 
-# Start Tomcat
-echo Starting Wildfly...
+# Start Wildfly in the background. This helps us to proceed with the next steps like waiting for the server to be ready to run the startup script, etc
+echo ***Starting Wildfly in the background...
+$JBOSS_HOME/bin/standalone.sh -b 0.0.0.0 -c standalone-full.xml &
 
-$JBOSS_HOME/bin/standalone.sh -b 0.0.0.0 -c standalone-full.xml
+function wait_for_server() {
+  until `$JBOSS_HOME/bin/jboss-cli.sh -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do
+    sleep 1
+    echo ***Server not ready, sleeping again
+  done
+}
+
+echo ***Waiting for server
+wait_for_server
+echo ***Server is ready
+
+# For now keep it simple by copying everything
+cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
+
+# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
+if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
+then
+    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
+    then
+        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
+    fi
+fi
+
+# Get the startup file path
+if [ -n "$1" ]
+then
+    # Path defined in the portal will be available as an argument to this script
+    STARTUP_FILE=$1
+else
+    # Default startup file path
+    STARTUP_FILE=/home/startup.sh
+fi
+
+# Run the startup file, if it exists
+if [ -f $STARTUP_FILE ]
+then
+    echo ***Running startup file $STARTUP_FILE
+    source $STARTUP_FILE
+    echo ***Finished running startup file $STARTUP_FILE
+else
+    echo ***Looked for startup file $STARTUP_FILE, but did not find it, so skipping running it.
+fi
+
+# Create marker file
+for dir in $JBOSS_HOME/standalone/deployments/*.war
+do
+    echo ***Creating $dir.dodeploy
+    echo $dir > $dir.dodeploy
+done
+
+# Now that we are done with all the steps, bring Wildfly to the foreground again before exiting. If we don't do this, the container will exit after the script exits which we don't want
+echo ***Container initialization complete, now we bring Wildfly to foreground...
+fg
+
+echo ***Exiting init_container.sh (Ideally we should never reach this line)
