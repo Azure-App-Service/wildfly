@@ -101,9 +101,29 @@ do
 	echo export $export_var=\'`printenv $export_var`\' >> ~/.profile
 done
 
-# Start Wildfly in the background. This helps us to proceed with the next steps like waiting for the server to be ready to run the startup script, etc
+
+# For now keep it simple by copying everything
+cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
+
+# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
+if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
+then
+    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
+    then
+        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
+    fi
+fi
+
+# Create marker file
+for dir in $JBOSS_HOME/standalone/deployments/*.war
+do
+    echo ***Creating $dir.dodeploy
+    echo $dir > $dir.dodeploy
+done
+
+# Start Wildfly management server in the background. This helps us to proceed with the next steps like waiting for the server to be ready to run the startup script, etc
 echo ***Starting Wildfly in the background...
-$JBOSS_HOME/bin/standalone.sh -b 0.0.0.0 -c standalone-full.xml &
+$JBOSS_HOME/bin/standalone.sh -b 0.0.0.0 --admin-only &
 
 function wait_for_server() {
   until `$JBOSS_HOME/bin/jboss-cli.sh -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do
@@ -112,9 +132,9 @@ function wait_for_server() {
   done
 }
 
-echo ***Waiting for server
+echo ***Waiting for admin server to be ready
 wait_for_server
-echo ***Server is ready
+echo ***Admin server is ready
 
 # Get the startup file path
 if [ -n "$1" ]
@@ -136,24 +156,8 @@ else
     echo ***Looked for startup file $STARTUP_FILE, but did not find it, so skipping running it.
 fi
 
-# For now keep it simple by copying everything
-cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
-
-# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
-if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
-then
-    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
-    then
-        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
-    fi
-fi
-
-# Create marker file
-for dir in $JBOSS_HOME/standalone/deployments/*.war
-do
-    echo ***Creating $dir.dodeploy
-    echo $dir > $dir.dodeploy
-done
+echo ***Starting JBOSS application server
+$JBOSS_HOME/bin/jboss-cli.sh -c "reload --server-config=standalone-full.xml"
 
 # Now that we are done with all the steps, bring Wildfly to the foreground again before exiting. If we don't do this, the container will exit after the script exits which we don't want
 echo ***Container initialization complete, now we bring Wildfly to foreground...
