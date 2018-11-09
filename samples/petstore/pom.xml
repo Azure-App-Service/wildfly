@@ -194,6 +194,41 @@
   <build>
     <finalName>applicationPetstore</finalName>
     <plugins>
+
+            <!--*************************************************-->
+            <!-- Deploy to App Service Linux           -->
+            <!--*************************************************-->
+            <plugin>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>azure-webapp-maven-plugin</artifactId>
+                <version>1.4.1</version>
+                <configuration>
+            
+                    <!-- Web App information -->
+                    <resourceGroup>${RESOURCEGROUP_NAME}</resourceGroup>
+                    <appServicePlanName>${WEBAPP_PLAN_NAME}</appServicePlanName>
+                    <appName>${WEBAPP_NAME}</appName>
+                    <region>${REGION}</region>
+                    <pricingTier>S3</pricingTier>
+            
+                    <!-- Java Runtime Stack for Web App on Linux-->
+                    <containerSettings>
+                        <imageName>${IMAGE_NAME}</imageName>
+                    </containerSettings>
+<!--
+                    <linuxRuntime>value</linuxRuntime>
+-->
+
+<!-- AI not supported yet            
+                    <appSettings>
+                        <property>
+                            <name>APPINSIGHTS_INSTRUMENTATIONKEY</name>
+                            <value>${APPINSIGHTS_INSTRUMENTATIONKEY}</value>
+                        </property>
+                    </appSettings>
+-->
+                </configuration>
+            </plugin>
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <version>${version.maven.war.plugin}</version>

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+module add --name=org.postgres --resources=/home/postgresql-42.2.5.jar --module-xml=/home/postgres-module.xml
+
+/subsystem=datasources/jdbc-driver=postgres:add(driver-name="postgres",driver-module-name="org.postgres",driver-class-name=org.postgresql.Driver,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
+
+data-source add --name=postgresDS --driver-name=postgres --jndi-name=java:jboss/datasources/postgresDS --connection-url=${POSTGRES_CONNECTIONURL,env.POSTGRES_CONNECTIONURL:jdbc:postgresql://db:5432/postgres} --user-name=${POSTGRES_USERNAME,env.POSTGRES_USERNAME:postgres} --password=${POSTGRES_PASSWORD,env.POSTGRES_PASSWORD:example} --use-ccm=true --max-pool-size=5 --blocking-timeout-wait-millis=5000 --enabled=true --driver-class=org.postgresql.Driver --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter --jta=true --use-java-context=true --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker
+
+reload --use-current-server-config=true
+
