@@ -22,8 +22,8 @@ COPY standalone-full.xml /tmp/wildfly/standalone-full.xml
 COPY sshd_config /etc/ssh/
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
 
-COPY index.jsp /tmp/wildfly/webapps/ROOT.war/index.jsp
-COPY background.png /tmp/wildfly/webapps/ROOT.war/background.png
+COPY index.jsp /tmp/wildfly/webapps/ROOT/index.jsp
+COPY background.png /tmp/wildfly/webapps/ROOT/background.png
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \
