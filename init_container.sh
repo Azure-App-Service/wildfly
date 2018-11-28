@@ -101,6 +101,8 @@ do
 	echo export $export_var=\'`printenv $export_var`\' >> ~/.profile
 done
 
+echo cd /home >> ~/.profile
+
 # Copy wardeployed apps to local location and create marker file for each
 for dirpath in /home/site/wwwroot/webapps/*
 do
