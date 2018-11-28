@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=mcr.microsoft.com/java/jre:8u181-zulu-alpine
+ARG BASE_IMAGE=mcr.microsoft.com/java/jre-headless:8u192-zulu-alpine
 ARG WILDFLY_VERSION
 FROM $BASE_IMAGE
 
