@@ -101,24 +101,18 @@ do
 	echo export $export_var=\'`printenv $export_var`\' >> ~/.profile
 done
 
-
-# For now keep it simple by copying everything
-cp -r /home/site/wwwroot/webapps/* $JBOSS_HOME/standalone/deployments/
-
-# Move ROOT to ROOT.war (temporarily, till the Maven plugin starts supporting deployment to dirs with .war extension)
-if [ -d $JBOSS_HOME/standalone/deployments/ROOT ]
-then
-    if [ ! -d $JBOSS_HOME/standalone/deployments/ROOT.war ]
-    then
-        mv $JBOSS_HOME/standalone/deployments/ROOT $JBOSS_HOME/standalone/deployments/ROOT.war
-    fi
-fi
-
-# Create marker file
-for dir in $JBOSS_HOME/standalone/deployments/*.war
+# Copy wardeployed apps to local location and create marker file for each
+for dirpath in /home/site/wwwroot/webapps/*
 do
-    echo ***Creating $dir.dodeploy
-    echo $dir > $dir.dodeploy
+    dir="$(basename -- $dirpath)"
+
+    echo ***Copying $dirpath to $JBOSS_HOME/standalone/deployments/$dir.war
+    cp -r $dirpath $JBOSS_HOME/standalone/deployments/$dir.war
+
+    markerfile=$JBOSS_HOME/standalone/deployments/$dir.war.dodeploy
+
+    echo ***Creating marker file $markerfile
+    echo $dir > $markerfile
 done
 
 # Start Wildfly management server in the background. This helps us to proceed with the next steps like waiting for the server to be ready to run the startup script, etc
