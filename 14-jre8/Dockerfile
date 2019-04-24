@@ -1,4 +1,7 @@
-ARG BASE_IMAGE=mcr.microsoft.com/java/jre-headless:8u192-zulu-alpine
+########################################################
+### ***DO NOT EDIT*** This is an auto-generated file ###
+########################################################
+ARG BASE_IMAGE=mcr.microsoft.com/java/jre-headless:8u212-zulu-alpine-with-tools
 ARG WILDFLY_VERSION
 FROM $BASE_IMAGE
 
@@ -7,7 +10,7 @@ ARG WILDFLY_VERSION
 
 LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.com>"
 
-ENV WILDFLY_VERSION $WILDFLY_VERSION
+ENV WILDFLY_VERSION 14.0.1.Final
 ENV JBOSS_HOME /opt/jboss/wildfly
 
 ENV _JAVA_OPTIONS -Djava.net.preferIPv4Stack=true
@@ -15,13 +18,13 @@ ENV _JAVA_OPTIONS -Djava.net.preferIPv4Stack=true
 ENV JAVA_OPTS -Djboss.http.port=80 $JAVA_OPTS
 ENV JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles $JAVA_OPTS
 
-COPY init_container.sh /bin/init_container.sh
-COPY standalone-full.xml /tmp/wildfly/standalone-full.xml
-COPY sshd_config /etc/ssh/
+COPY tmp/shared/misc/init_container.sh /bin/init_container.sh
+COPY tmp/shared/wildfly/14/standalone-full.xml /tmp/wildfly/standalone-full.xml
+COPY tmp/shared/misc/sshd_config /etc/ssh/
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
 
-COPY index.jsp /tmp/wildfly/webapps/ROOT/index.jsp
-COPY background.png /tmp/wildfly/webapps/ROOT/background.png
+COPY tmp/shared/misc/index.jsp /tmp/wildfly/webapps/ROOT/index.jsp
+COPY tmp/shared/misc/background.png /tmp/wildfly/webapps/ROOT/background.png
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \
@@ -40,3 +43,7 @@ ENV LAUNCH_JBOSS_IN_BACKGROUND true
 EXPOSE 80 2222
 
 ENTRYPOINT ["/bin/init_container.sh"]
+########################################################
+### ***DO NOT EDIT*** This is an auto-generated file ###
+########################################################
+
