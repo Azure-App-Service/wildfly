@@ -10,7 +10,7 @@ function GetImage
 {
     param([string]$version, [string]$timestamp)
 
-    $image = $RepoName + '/tomcat:' + $version + '_' + $timestamp
+    $image = $RepoName + '/wildfly:' + $version + '_' + $timestamp
 
     return $image
 }
@@ -67,12 +67,6 @@ $utcTime=$localTime.ToUniversalTime()
 
 $timestamp = $utcTime.ToString('yyMMddHHmm')
 
-Build -directory '8.5-jre8' -version '8.5-jre8' -timestamp $timestamp
-Build -directory '9.0-jre8' -version '9.0-jre8' -timestamp $timestamp
-Build -directory '8.5-java11' -version '8.5-java11' -timestamp $timestamp
-Build -directory '9.0-java11' -version '9.0-java11' -timestamp $timestamp
+Build -directory '14-jre8' -version '8.5-jre8' -timestamp $timestamp
 
-Publish -version '8.5-jre8' -timestamp $timestamp
-Publish -version '9.0-jre8' -timestamp $timestamp
-Publish -version '8.5-java11' -timestamp $timestamp
-Publish -version '9.0-java11' -timestamp $timestamp
+Publish -version '14-jre8' -timestamp $timestamp

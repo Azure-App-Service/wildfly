@@ -19,7 +19,7 @@ function GetImage
 {
    param([string]$repoName, [string]$version, [string]$timestamp)
    
-   $image = $repoName + '/tomcat:' + $version + '_' + $timestamp
+   $image = $repoName + '/wildfly:' + $version + '_' + $timestamp
    
    return $image
 }
