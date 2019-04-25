@@ -10,7 +10,7 @@ Param(
 	[bool]$usePostgresql=$false
 )
 
-$env:RESOURCEGROUP_NAME='tomcat-perftest2'
+$env:RESOURCEGROUP_NAME='wildfly-perftest'
 $env:WEBAPP_NAME=$webAppName
 $env:WEBAPP_PLAN_NAME=$webAppName # use the same name for the web app and app service plan
 $env:IMAGE_NAME=$imageName
