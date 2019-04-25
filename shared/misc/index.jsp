@@ -84,9 +84,9 @@
                             <%@ page import="java.util.*" %>
                             <%
                                 ArrayList<String> mainPageProps = new ArrayList<String>();
-                                mainPageProps.add("catalina.base");
-                                mainPageProps.add("jetty.base");
+                                mainPageProps.add("wildfly.version");
                                 mainPageProps.add("java.version");
+                                mainPageProps.add("jboss.home.dir");
                                 mainPageProps.add("java.home");
 
                                 for(String name : mainPageProps)
