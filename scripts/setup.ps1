@@ -5,7 +5,7 @@ function setup
     $tmpDirRootPath = $version + '/tmp'
 
     # Copy the shared files to the target directory
-    copy-item -Force -recurse shared "$tmpDirRootpath/shared"
+    copy-item -Force -recurse shared "$tmpDirRootpath"
     
     $dockerFileTemplatePath = '.\shared\misc\Dockerfile'
     $dockerFileOutPath = "$version\Dockerfile"
