@@ -45,6 +45,7 @@ fi
 # Configure JAVA OPTIONS. Make sure, we append the default values instead of prepending them.
 # That way, the default values take precedence and we avoid the risk of an appsetting overriding the critical (default) properties.
 
+export JAVA_OPTS="$JAVA_OPTS -Dwildfly.version=$WILDFLY_VERSION"
 export JAVA_OPTS="$JAVA_OPTS -Djboss.http.port=$PORT"
 export JAVA_OPTS="$JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles"
 export JAVA_OPTS="$JAVA_OPTS -noverify"
