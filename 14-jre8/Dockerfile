@@ -2,21 +2,20 @@
 ### ***DO NOT EDIT*** This is an auto-generated file ###
 ########################################################
 ARG BASE_IMAGE=mcr.microsoft.com/java/jre-headless:8u212-zulu-alpine-with-tools
-ARG WILDFLY_VERSION
+ARG GIT_COMMIT=unspecified
 FROM $BASE_IMAGE
 
-# Redefine - as we need it inside the container
-ARG WILDFLY_VERSION
+# Re-define ARG to make the build argument available for use in the rest of the Dockerfile
+ARG GIT_COMMIT
 
 LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.com>"
 
 ENV WILDFLY_VERSION 14.0.1.Final
 ENV JBOSS_HOME /opt/jboss/wildfly
+ENV GIT_COMMIT $GIT_COMMIT
 
-ENV _JAVA_OPTIONS -Djava.net.preferIPv4Stack=true
-
-ENV JAVA_OPTS -Djboss.http.port=80 $JAVA_OPTS
-ENV JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles $JAVA_OPTS
+ENV PORT 80
+ENV SSH_PORT 2222
 
 COPY tmp/shared/misc/init_container.sh /bin/init_container.sh
 COPY tmp/shared/wildfly/14/standalone-full.xml /tmp/wildfly/standalone-full.xml
@@ -28,6 +27,16 @@ COPY tmp/shared/misc/background.png /tmp/wildfly/webapps/ROOT/background.png
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \
+        # Remove unnecessary services
+        && rm -f /etc/init.d/hwdrivers \
+                 /etc/init.d/hwclock \
+                 /etc/init.d/mtab \
+                 /etc/init.d/bootmisc \
+                 /etc/init.d/modules \
+                 /etc/init.d/modules-load \
+                 /etc/init.d/modloop \
+        # Can't do cgroups
+        && sed -i 's/\tcgroup_add_service/\t#cgroup_add_service/g' /lib/rc/sh/openrc-run.sh \
         && mkdir /root/.postgresql \
         && wget -O /root/.postgresql/root.crt https://www.digicert.com/CACerts/BaltimoreCyberTrustRoot.crt \
         && echo "root:Docker!" | chpasswd \

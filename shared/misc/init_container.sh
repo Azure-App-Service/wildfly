@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -m # Enable job control
 
-cat >/etc/motd <<EOL
+cat >/etc/motd <<EOL 
   _____                               
   /  _  \ __________ _________   ____  
  /  /_\  \\___   /  |  \_  __ \_/ __ \ 
@@ -11,26 +11,20 @@ cat >/etc/motd <<EOL
 A P P   S E R V I C E   O N   L I N U X
 
 Documentation: http://aka.ms/webapp-linux
+
+**NOTE**: No files or system changes outside of /home will persist beyond your application's current session. /home is your application's persistent storage and is shared across all the server instances.
+
+
 EOL
 cat /etc/motd
 
-echo "***Setup openrc ..." && openrc && touch /run/openrc/softlevel
+echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 
-echo ***Starting ssh service...
+echo Updating /etc/ssh/sshd_config to use PORT $SSH_PORT
+sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
+
+echo Starting ssh service...
 rc-service sshd start
-
-# Change to the home directory (helps keep paths relative to /home in used provided startup script)
-cd /home
-echo ***pwd: `pwd`
-
-# If a custom initialization script is defined, run it and exit.
-if [ -n "$INIT_SCRIPT" ]
-then
-    echo ***Running custom initialization script
-    source $INIT_SCRIPT
-    echo ***Finished running custom initialization script. Exiting.
-    exit
-fi
 
 if [ ! -d /home/site/wwwroot/webapps ]
 then
@@ -38,70 +32,35 @@ then
     cp -r /tmp/wildfly/webapps /home/site/wwwroot
 fi
 
-# WEBSITE_INSTANCE_ID will be defined uniquely for each worker instance while running in Azure.
-# During development it may not be defined, in that case  we set WEBSITE_INSTNACE_ID=dev.
-if [ -z "$WEBSITE_INSTANCE_ID" ]
+# COMPUTERNAME will be defined uniquely for each worker instance while running in Azure.
+# If COMPUTERNAME isn't available, we assume that the container is running in a dev environment.
+# If running in dev environment, define required environment variables.
+if [ -z "$COMPUTERNAME" ]
 then
-    export WEBSITE_INSTANCE_ID=dev
+    export COMPUTERNAME=dev
 fi
 
-# After all env vars are defined, add the ones of interest to ~/.profile
-# Adding to ~/.profile makes the env vars available to new login sessions (ssh) of the same user.
+# BEGIN: Define JAVA OPTIONS
 
-# list of variables that will be added to ~/.profile
-export_vars=()
+# Configure JAVA OPTIONS. Make sure, we append the default values instead of prepending them.
+# That way, the default values take precedence and we avoid the risk of an appsetting overriding the critical (default) properties.
 
-# Step 1. Add app settings to ~/.profile
-# To check if an environment variable xyz is an app setting, we check if APPSETTING_xyz is defined as an env var
-while read -r var
-do
-    if [ -n "`printenv APPSETTING_$var`" ]
-    then
-        export_vars+=($var)
-    fi
-done <<< `printenv | cut -d "=" -f 1 | grep -v ^APPSETTING_`
+export JAVA_OPTS="$JAVA_OPTS -Djboss.http.port=$PORT"
+export JAVA_OPTS="$JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles"
+export JAVA_OPTS="$JAVA_OPTS -noverify"
 
-# Step 2. Add well known environment variables to ~/.profile
-well_known_env_vars=( 
-    JBOSS_HOME
-    JBOSS_CLI
-    WILDFLY_VERSION
-    HTTP_LOGGING_ENABLED
-    WEBSITE_SITE_NAME
-    WEBSITE_ROLE_INSTANCE_ID
-    TOMCAT_VERSION
-    JAVA_OPTS
-    JAVA_HOME
-    JAVA_VERSION
-    WEBSITE_INSTANCE_ID
-    _JAVA_OPTIONS
-    JAVA_ALPINE_VERSION
-    JAVA_DEBIAN_VERSION
-    )
+export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Djava.net.preferIPv4Stack=true"
 
-for var in "${well_known_env_vars[@]}"
-do
-    if [ -n "`printenv $var`" ]
-    then
-        export_vars+=($var)
-    fi
-done
+# END: Define JAVA OPTIONS
 
-# Step 3. Add environment variables with well known prefixes to ~/.profile
-while read -r var
-do
-    export_vars+=($var)
-done <<< `printenv | cut -d "=" -f 1 | grep -E "^(WEBSITE|APPSETTING|SQLCONNSTR|MYSQLCONNSTR|SQLAZURECONNSTR|CUSTOMCONNSTR)_"`
+# BEGIN: Configure /etc/profile
 
-# Write the variables to be exported to ~/.profile
-for export_var in "${export_vars[@]}"
-do
-    echo ***Exporting env var $export_var
-    # We use single quotes to preserve escape characters
-	echo export $export_var=\'`printenv $export_var`\' >> ~/.profile
-done
+eval $(printenv | sed -n "s/^\([^=]\+\)=\(.*\)$/export \1=\2/p" | sed 's/"/\\\"/g' | sed '/=/s//="/' | sed 's/$/"/' >> /etc/profile)
 
-echo cd /home >> ~/.profile
+# We want all ssh sesions to start in the /home directory
+echo "cd /home" >> /etc/profile
+
+# END: Configure /etc/profile
 
 # Copy wardeployed apps to local location and create marker file for each
 for dirpath in /home/site/wwwroot/webapps/*
@@ -142,15 +101,63 @@ else
     STARTUP_FILE=/home/startup.sh
 fi
 
-# Run the startup file, if it exists
-if [ -f $STARTUP_FILE ]
+# BEGIN: Process startup file / startup command, if any
+
+DEFAULT_STARTUP_FILE=/home/startup.sh
+STARTUP_FILE=
+STARTUP_COMMAND=
+
+# The web app can be configured to run a custom startup command or a custom startup script
+# This custom command / script will be available to us as a param ($1, $2, ...)
+#
+# IF $1 is a non-empty string AND an existing file, we treat $1 as a startup file (and ignore $2, $3, ...)
+# IF $1 is a non-empty string BUT NOT an existing file, we treat $@ (equivalent of $1, $2, ... combined) as a startup command
+# IF $1 is an empty string AND $DEFAULT_STARTUP_FILE exists, we use it as the startup file
+# ELSE, we skip running the startup script / command
+#
+if [ -n "$1" ] # $1 is a non-empty string
 then
-    echo ***Running startup file $STARTUP_FILE
-    source $STARTUP_FILE
-    echo ***Finished running startup file $STARTUP_FILE
-else
-    echo ***Looked for startup file $STARTUP_FILE, but did not find it, so skipping running it.
+    if [ -f "$1" ] # $1 file exists
+    then
+        STARTUP_FILE=$1
+    else
+        STARTUP_COMMAND=$@
+    fi
+elif [ -f $DEFAULT_STARTUP_FILE ] # Default startup file path exists
+then
+    STARTUP_FILE=$DEFAULT_STARTUP_FILE
 fi
+
+echo STARTUP_FILE=$STARTUP_FILE
+echo STARTUP_COMMAND=$STARTUP_COMMAND
+
+# If $STARTUP_FILE is a non-empty string, we need to run the startup file
+# We first fix the EOL characters in it and then run it
+if [ -n "$STARTUP_FILE" ]
+then
+
+    # Copy startup file to a temporary location and fix the EOL characters in the temp file (to avoid changing the original copy)
+    TMP_STARTUP_FILE=/tmp/startup.sh
+    echo Copying $STARTUP_FILE to $TMP_STARTUP_FILE and fixing EOL characters in $TMP_STARTUP_FILE
+    cp $STARTUP_FILE $TMP_STARTUP_FILE
+    dos2unix $TMP_STARTUP_FILE
+    
+    echo Running STARTUP_FILE: $TMP_STARTUP_FILE
+    source $TMP_STARTUP_FILE
+    echo Finished running startup file $TMP_STARTUP_FILE
+else
+    echo No STARTUP_FILE available.
+fi
+
+if [ -n "$STARTUP_COMMAND" ]
+then
+    echo Running STARTUP_COMMAND: "$STARTUP_COMMAND"
+    $STARTUP_COMMAND
+else
+    echo No STARTUP_COMMAND defined.
+fi
+
+# END: Process startup file / startup command, if any
 
 echo ***Starting JBOSS application server
 $JBOSS_HOME/bin/jboss-cli.sh -c "reload --server-config=standalone-full.xml"
@@ -159,4 +166,4 @@ $JBOSS_HOME/bin/jboss-cli.sh -c "reload --server-config=standalone-full.xml"
 echo ***Container initialization complete, now we bring Wildfly to foreground...
 fg
 
-echo ***Exiting init_container.sh (Ideally we should never reach this line)
+echo "***Exiting init_container.sh (Ideally we should never reach this line)"

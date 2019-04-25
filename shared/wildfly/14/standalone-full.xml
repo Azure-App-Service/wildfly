@@ -106,7 +106,7 @@
                 <formatter>
                     <named-formatter name="PATTERN"/>
                 </formatter>
-                <file relative-to="jboss.server.log.dir" path="server.${env.WEBSITE_INSTANCE_ID}.log"/>
+                <file relative-to="jboss.server.log.dir" path="server.${env.COMPUTERNAME}.log"/>
                 <suffix value=".yyyy-MM-dd"/>
                 <append value="true"/>
             </periodic-rotating-file-handler>
@@ -244,7 +244,7 @@
                 <provider-loader name="openssl" module="org.wildfly.openssl"/>
             </providers>
             <audit-logging>
-                <file-audit-log name="local-audit" path="audit.${env.WEBSITE_INSTANCE_ID}.log" relative-to="jboss.server.log.dir" format="JSON"/>
+                <file-audit-log name="local-audit" path="audit.${env.COMPUTERNAME}.log" relative-to="jboss.server.log.dir" format="JSON"/>
             </audit-logging>
             <security-domains>
                 <security-domain name="ApplicationDomain" default-realm="ApplicationRealm" permission-mapper="default-permission-mapper">
