@@ -20,7 +20,6 @@ COPY tmp/shared/misc/sshd_config /etc/ssh/
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
 
 COPY tmp/shared/misc/index.jsp /tmp/wildfly/webapps/ROOT/index.jsp
-COPY tmp/shared/misc/background.png /tmp/wildfly/webapps/ROOT/background.png
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \
