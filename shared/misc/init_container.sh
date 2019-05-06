@@ -78,8 +78,9 @@ do
 done
 
 # Start Wildfly management server in the background. This helps us to proceed with the next steps like waiting for the server to be ready to run the startup script, etc
+# Also, use the standalone-full.xml config (Java EE full-profile)
 echo ***Starting Wildfly in the background...
-$JBOSS_HOME/bin/standalone.sh -b 0.0.0.0 --admin-only &
+$JBOSS_HOME/bin/standalone.sh --server-config=standalone-full.xml -b 0.0.0.0 --admin-only &
 
 function wait_for_server() {
   until `$JBOSS_HOME/bin/jboss-cli.sh -c ":read-attribute(name=server-state)" 2> /dev/null | grep -q running`; do
@@ -161,7 +162,7 @@ fi
 # END: Process startup file / startup command, if any
 
 echo ***Starting JBOSS application server
-$JBOSS_HOME/bin/jboss-cli.sh -c "reload --server-config=standalone-full.xml"
+$JBOSS_HOME/bin/jboss-cli.sh -c "reload"
 
 # Now that we are done with all the steps, bring Wildfly to the foreground again before exiting. If we don't do this, the container will exit after the script exits which we don't want
 echo ***Container initialization complete, now we bring Wildfly to foreground...
