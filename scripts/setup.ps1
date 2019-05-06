@@ -4,8 +4,13 @@ function setup
 
     $tmpDirRootPath = $version + '/tmp'
 
+    If (Test-Path $tmpDirRootPath)
+    {
+        remove-item -recurse -force $tmpDirRootPath
+    }
+
     # Copy the shared files to the target directory
-    copy-item -Force -recurse shared "$tmpDirRootpath"
+    copy-item -recurse shared "$tmpDirRootpath\shared"
     
     $dockerFileTemplatePath = '.\shared\misc\Dockerfile'
     $dockerFileOutPath = "$version\Dockerfile"
@@ -31,7 +36,10 @@ function setup
     $wildflyLocalPath = "$tmpDirRootPath\wildfly-$wildflyVersion.tar.gz"
     If(!(test-path $wildflyLocalPath))
     {
-        Invoke-WebRequest -Uri https://download.jboss.org/wildfly/$wildflyVersion/wildfly-$wildflyVersion.tar.gz -OutFile $wildflyLocalPath
+        $wildflyUrl = "https://download.jboss.org/wildfly/$wildflyVersion/wildfly-$wildflyVersion.tar.gz"
+        Write-Host "Downloading $wildflyUrl ..."
+        (New-Object System.Net.WebClient).DownloadFile($wildflyUrl, $wildflyLocalPath)
+        Write-Host "Download complete"
     }
 
     $headerFooter = "########################################################`n### ***DO NOT EDIT*** This is an auto-generated file ###`n########################################################`n"
