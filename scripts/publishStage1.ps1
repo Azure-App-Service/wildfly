@@ -67,6 +67,6 @@ $utcTime=$localTime.ToUniversalTime()
 
 $timestamp = $utcTime.ToString('yyMMddHHmm')
 
-Build -directory '14-jre8' -version '8.5-jre8' -timestamp $timestamp
+Build -directory '14-jre8' -version '14-jre8' -timestamp $timestamp
 
 Publish -version '14-jre8' -timestamp $timestamp

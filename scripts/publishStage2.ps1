@@ -66,7 +66,4 @@ if ($timestamp -eq '0000000000')
     return;
 }
 
-Publish -version '8.5-jre8' -timestamp $timestamp -pushOriginalTag $pushOriginalTag
-Publish -version '9.0-jre8' -timestamp $timestamp -pushOriginalTag $pushOriginalTag
-Publish -version '8.5-java11' -timestamp $timestamp -pushOriginalTag $pushOriginalTag
-Publish -version '9.0-java11' -timestamp $timestamp -pushOriginalTag $pushOriginalTag
+Publish -version '14-jre8' -timestamp $timestamp -pushOriginalTag $pushOriginalTag
