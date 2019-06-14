@@ -20,6 +20,9 @@ ENV SSH_PORT 2222
 COPY tmp/shared/misc/init_container.sh /bin/init_container.sh
 COPY tmp/shared/wildfly/14/standalone-full.xml /tmp/wildfly/standalone-full.xml
 COPY tmp/shared/misc/sshd_config /etc/ssh/
+COPY tmp/shared/easyauth/azure.appservice.easyauth.jar /tmp/wildfly/easyauth/azure.appservice.easyauth.jar
+COPY tmp/shared/easyauth/easyauth-module.xml /tmp/wildfly/easyauth/easyauth-module.xml
+COPY tmp/shared/easyauth/easyauth.cli /tmp/wildfly/easyauth/easyauth.cli
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
 
 COPY tmp/shared/misc/index.jsp /tmp/wildfly/webapps/ROOT/index.jsp

@@ -1,0 +1,2 @@
+module add --name=azure.appservice.easyauth --resources=/tmp/wildfly/easyauth/azure.appservice.easyauth.jar --module-xml=/tmp/wildfly/easyauth/easyauth-module.xml
+/subsystem=ee:write-attribute(name="global-modules",value=[{"name" => "azure.appservice.easyauth"}])

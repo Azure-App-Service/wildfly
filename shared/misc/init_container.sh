@@ -93,6 +93,9 @@ echo ***Waiting for admin server to be ready
 wait_for_server
 echo ***Admin server is ready
 
+# EasyAuth setup (Let the EasyAuth jar decide whether to install or skip the EasyAuth filter)
+$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/easyauth/easyauth.cli
+
 # Get the startup file path
 if [ -n "$1" ]
 then
