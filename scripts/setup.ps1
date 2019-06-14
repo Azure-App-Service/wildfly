@@ -1,6 +1,12 @@
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$False, HelpMessage='Example: $true for using previously downloaded WildFly to speed up setup time')]
+    [bool]$incremental=$false
+)
+
 function setup
 {
-	param([string]$version)
+    param([string]$version)
 
     $tmpDirRootPath = $version + '/tmp'
 
@@ -33,13 +39,24 @@ function setup
         }
     }
 
-    $wildflyLocalPath = "$tmpDirRootPath\wildfly-$wildflyVersion.tar.gz"
+    # Convert relative path to absolute path (for logging purposes)
+    $wildflyLocalPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("$tmpDirRootPath\wildfly-$wildflyVersion.tar.gz")
+
+    # If $incremental == $true and a local copy of WildFly exists, use it
+    If($incremental -and (test-path "$env:TEMP\wildfly-$wildflyVersion.tar.gz"))
+    {
+        Write-Host "SKIPPING download"
+        Write-Host "Using previously downloaded copy of WildFly from $env:TEMP\wildfly-$wildflyVersion.tar.gz"
+        copy-item "$env:TEMP\wildfly-$wildflyVersion.tar.gz" $wildflyLocalPath
+    }
+
     If(!(test-path $wildflyLocalPath))
     {
         $wildflyUrl = "https://download.jboss.org/wildfly/$wildflyVersion/wildfly-$wildflyVersion.tar.gz"
-        Write-Host "Downloading $wildflyUrl ..."
+        Write-Host "Downloading $wildflyUrl to $wildflyLocalPath ..."
         (New-Object System.Net.WebClient).DownloadFile($wildflyUrl, $wildflyLocalPath)
-        Write-Host "Download complete"
+        copy-item $wildflyLocalPath "$env:TEMP\wildfly-$wildflyVersion.tar.gz"
+        Write-Host "Download complete - $wildflyLocalPath"
     }
 
     $headerFooter = "########################################################`n### ***DO NOT EDIT*** This is an auto-generated file ###`n########################################################`n"
