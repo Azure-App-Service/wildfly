@@ -17,15 +17,24 @@ ENV GIT_COMMIT $GIT_COMMIT
 ENV PORT 80
 ENV SSH_PORT 2222
 
-COPY tmp/shared/misc/init_container.sh /bin/init_container.sh
-COPY tmp/shared/wildfly/14/standalone-full.xml /tmp/wildfly/standalone-full.xml
-COPY tmp/shared/misc/sshd_config /etc/ssh/
-COPY tmp/shared/easyauth/azure.appservice.easyauth.jar /tmp/wildfly/easyauth/azure.appservice.easyauth.jar
-COPY tmp/shared/easyauth/easyauth-module.xml /tmp/wildfly/easyauth/easyauth-module.xml
-COPY tmp/shared/easyauth/easyauth.cli /tmp/wildfly/easyauth/easyauth.cli
+# WildFly configuration
 COPY tmp/wildfly-$WILDFLY_VERSION.tar.gz /tmp/wildfly-$WILDFLY_VERSION.tar.gz
+COPY tmp/shared/wildfly/14/standalone-full.xml /tmp/wildfly/standalone-full.xml
 
-COPY tmp/shared/misc/index.jsp /tmp/wildfly/webapps/ROOT/index.jsp
+# miscellaneous configuration
+COPY tmp/shared/appservice/init_container.sh /bin/init_container.sh
+COPY tmp/shared/appservice/sshd_config /etc/ssh/
+COPY tmp/shared/appservice/index.jsp /tmp/wildfly/webapps/ROOT/index.jsp
+
+# azure.appservice.easyauth.jar configuration
+COPY tmp/shared/appservice/lib/azure.appservice.easyauth.jar /tmp/wildfly/appservice/lib/azure.appservice.easyauth.jar
+COPY tmp/shared/appservice/lib/azure.appservice.easyauth-module.xml /tmp/wildfly/appservice/lib/azure.appservice.easyauth-module.xml
+COPY tmp/shared/appservice/lib/azure.appservice.easyauth.cli /tmp/wildfly/appservice/lib/azure.appservice.easyauth.cli
+
+# azure.appservice.jar configuration
+COPY tmp/shared/appservice/lib/azure.appservice.jar /tmp/wildfly/appservice/lib/azure.appservice.jar
+COPY tmp/shared/appservice/lib/azure.appservice-module.xml /tmp/wildfly/appservice/lib/azure.appservice-module.xml
+COPY tmp/shared/appservice/lib/azure.appservice.cli /tmp/wildfly/appservice/lib/azure.appservice.cli
 
 RUN apk add --update openssh-server bash openrc \
         && rm -rf /var/cache/apk/* \

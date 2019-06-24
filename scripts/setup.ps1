@@ -18,7 +18,7 @@ function setup
     # Copy the shared files to the target directory
     copy-item -recurse shared "$tmpDirRootpath\shared"
     
-    $dockerFileTemplatePath = '.\shared\misc\Dockerfile'
+    $dockerFileTemplatePath = '.\shared\appservice\Dockerfile'
     $dockerFileOutPath = "$version\Dockerfile"
 
     # Generate the Dockerfile from the template and place it in the target directory

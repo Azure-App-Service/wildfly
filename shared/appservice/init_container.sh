@@ -38,6 +38,13 @@ fi
 if [ -z "$COMPUTERNAME" ]
 then
     export COMPUTERNAME=dev
+
+    # BEGIN: AzMon related environment variables
+    export HTTP_LOGGING_ENABLED=1
+    export WEBSITE_HOSTNAME=dev.appservice.com
+    export APPSETTING_WEBSITE_AZMON_ENABLED=True
+    export DIAGNOSTIC_LOGS_MOUNT_PATH=/var/log/diagnosticLogs
+    # END: AzMon related environment variables
 fi
 
 # BEGIN: Define JAVA OPTIONS
@@ -48,6 +55,9 @@ fi
 export JAVA_OPTS="$JAVA_OPTS -Dwildfly.version=$WILDFLY_VERSION"
 export JAVA_OPTS="$JAVA_OPTS -Djboss.http.port=$PORT"
 export JAVA_OPTS="$JAVA_OPTS -Djboss.server.log.dir=/home/LogFiles"
+export JAVA_OPTS="$JAVA_OPTS -Dcom.microsoft.azure.appservice.logging.AppServiceHandler.directory=/var/log/diagnosticLogs"
+export JAVA_OPTS="$JAVA_OPTS -Dcom.microsoft.azure.appservice.logging.AppServiceHandler.prefix=application.$COMPUTERNAME."
+export JAVA_OPTS="$JAVA_OPTS -Dcom.microsoft.azure.appservice.logging.AppServiceHandler.maxDays=2"
 export JAVA_OPTS="$JAVA_OPTS -noverify"
 
 export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Djava.net.preferIPv4Stack=true"
@@ -94,7 +104,8 @@ wait_for_server
 echo ***Admin server is ready
 
 # EasyAuth setup (Let the EasyAuth jar decide whether to install or skip the EasyAuth filter)
-$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/easyauth/easyauth.cli
+$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/appservice/lib/azure.appservice.easyauth.cli
+$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/appservice/lib/azure.appservice.cli
 
 # Get the startup file path
 if [ -n "$1" ]

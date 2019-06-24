@@ -1,0 +1,7 @@
+# MODULE SETUP
+module add --name=azure.appservice --resources=/tmp/wildfly/appservice/lib/azure.appservice.jar --module-xml=/tmp/wildfly/appservice/lib/azure.appservice-module.xml
+
+# HANDLER / FORMATTER SETUP
+/subsystem=logging/custom-formatter=APPSERVICEFORMATTER:add(class=com.microsoft.azure.appservice.logging.AppServiceFormatter, module=azure.appservice)
+/subsystem=logging/custom-handler=APPSERVICEHANDLER:add(class=com.microsoft.azure.appservice.logging.AppServiceHandler,module=azure.appservice,named-formatter=APPSERVICEFORMATTER)
+/subsystem=logging/root-logger=ROOT:add-handler(name=APPSERVICEHANDLER)
