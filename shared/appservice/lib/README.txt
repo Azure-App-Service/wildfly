@@ -1,0 +1,2 @@
+azure.appservice.jar: d655ad58dc5fa7cdbc8ee9863a6161da39cd154b
+azure.appservice.easyauth.jar: 7b6c769980dc3b457f276bbc03e5507ab6cb5737
