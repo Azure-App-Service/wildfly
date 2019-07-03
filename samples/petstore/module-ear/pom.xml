@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.microsoft.azure.appservice</groupId>
+    <artifactId>petstoreear</artifactId>
+    <version>1.0.0</version>
+    <name>petstoreear</name>
+    <packaging>ear</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.microsoft.azure.appservice</groupId>
+            <version>1.0.0</version>
+            <artifactId>petstoreweb</artifactId>
+            <type>war</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-ear-plugin</artifactId>
+               <version>2.10.1</version>
+               <configuration>
+                  <version>7</version>
+                  <modules>
+                     <webModule>
+                        <groupId>com.microsoft.azure.appservice</groupId>
+                        <artifactId>petstoreweb</artifactId>
+                        <contextRoot>/ear</contextRoot>
+                     </webModule>
+                  </modules>
+               </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -30,3 +30,5 @@ teamworkUser.xml
 projectFilesBackup*
 *.zip
 *.gzprojectFilesBackup*
+bin
+target
