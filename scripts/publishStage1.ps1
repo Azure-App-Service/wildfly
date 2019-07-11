@@ -19,7 +19,7 @@ function Build
 {
     param([string]$directory, [string]$version, [string]$timestamp)
 
-    .\scripts\setup.ps1 -version $version
+    .\scripts\setup.ps1 -incremental $false
 
     $image = GetImage -version $version -timestamp $timestamp
     $gitcommit=(git log -1 --pretty=%H)
