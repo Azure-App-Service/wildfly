@@ -73,6 +73,8 @@ echo "cd /home" >> /etc/profile
 
 # END: Configure /etc/profile
 
+# BEGIN: Start management server in the background and wait for it to be ready
+
 # Start Wildfly management server in the background. This helps us to proceed with the next steps like waiting for the server to be ready to run the startup script, etc
 # Also, use the standalone-full.xml config (Java EE full-profile)
 echo ***Starting Wildfly in the background...
@@ -88,6 +90,17 @@ function wait_for_server() {
 echo ***Waiting for admin server to be ready
 wait_for_server
 echo ***Admin server is ready
+
+# END: Start management server in the background and wait for it to be ready
+
+# BEGIN: Install modules
+
+$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/appservice/lib/azure.appservice.easyauth.cli
+$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/appservice/lib/azure.appservice.cli
+
+# END: Install modules
+
+# BEGIN: Deploy the apps
 
 # Copy wardeployed apps to local location and create marker file for each
 if [ -f /home/site/wwwroot/app.ear ]
@@ -117,9 +130,13 @@ else
     done
 fi
 
-# EasyAuth setup (Let the EasyAuth jar decide whether to install or skip the EasyAuth filter)
-$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/appservice/lib/azure.appservice.easyauth.cli
-$JBOSS_HOME/bin/jboss-cli.sh -c --file=/tmp/wildfly/appservice/lib/azure.appservice.cli
+# END: Deploy the apps
+
+# BEGIN: Process startup file / startup command, if any
+
+# NOTE: Startup file / command, if any, is run only after installing the necessary modules and deploying all the apps.
+#       This guarantees that in case the custom startup command / script issues a CLI "reload" command (which is not really needed),
+#       apps would have been deployed and modules would have been configured by then already.
 
 # Get the startup file path
 if [ -n "$1" ]
@@ -130,8 +147,6 @@ else
     # Default startup file path
     STARTUP_FILE=/home/startup.sh
 fi
-
-# BEGIN: Process startup file / startup command, if any
 
 DEFAULT_STARTUP_FILE=/home/startup.sh
 STARTUP_FILE=
@@ -189,11 +204,19 @@ fi
 
 # END: Process startup file / startup command, if any
 
+# BEGIN: Issue command to start application server
+
 echo ***Starting JBOSS application server
 $JBOSS_HOME/bin/jboss-cli.sh -c "reload"
+
+# END: Issue command to start application server
+
+# BEGIN: Bring management server to foreground
 
 # Now that we are done with all the steps, bring Wildfly to the foreground again before exiting. If we don't do this, the container will exit after the script exits which we don't want
 echo ***Container initialization complete, now we bring Wildfly to foreground...
 fg
+
+# END: Bring management server to foreground
 
 echo "***Exiting init_container.sh (Ideally we should never reach this line)"
